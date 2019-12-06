@@ -31,18 +31,18 @@
 	
 	
 	//STEP 3
-    d3.csv('City_Grid_data.csv', function(error, boundary_data) {
-		if (error)
-			console.log(error)
-	  	data = boundary_data;
+    // d3.csv('City_Grid_data.csv', function(error, boundary_data) {
+	// 	if (error)
+	// 		console.log(error)
+	//   	data = boundary_data;
 
-	  	data = data.filter(function(d){
-	  		if (isNaN(d['Latitude'])) {
-	  			console.log(d['Latitude'])
-	  		} else {
-	  			return d
-	  		}
-	  	});
+	//   	data = data.filter(function(d){
+	//   		if (isNaN(d['Latitude'])) {
+	//   			console.log(d['Latitude'])
+	//   		} else {
+	//   			return d
+	//   		}
+	//   	});
 	var techBoundaryLatLngs = [
 	  [33.76816, -84.39059], //starting point in the bottom right at north avenue apartments
 	  [33.76816, -84.39213],
