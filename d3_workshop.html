@@ -1,0 +1,124 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+	<title>Georgia Tech 2017 Crime Map</title>
+	<!-- import D3 and Leaflet and our stylesheet-->
+	<script src="https://d3js.org/d3.v4.min.js"></script>
+	<script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
+	<link rel="stylesheet" type="text/css" href="stylesheet.css" />
+</head>
+<body>
+  	<div id='container'>
+  		<div id="mapid"></div>
+  	</div>
+</body>
+<script type="text/javascript">
+	//STEP ONE
+	var atl = new L.LatLng(33.77438, -84.39879);
+	var mymap = L.map('mapid').setView(atl, 16);
+
+	L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
+	  attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
+	  maxZoom: 20,
+	  minZoom: 15,
+	  id: 'mapbox.light',
+	  accessToken: 'pk.eyJ1IjoiamFnb2R3aW4iLCJhIjoiY2lnOGQxaDhiMDZzMXZkbHYzZmN4ZzdsYiJ9.Uwh_L37P-qUoeC-MBSDteA'
+	}).addTo(mymap);
+	//STEP 2
+	var studentCenterMarker = L.marker([33.77438, -84.39879]).bindPopup('Student Center').addTo(mymap);
+	// var northAvenueMarker = L.marker([33.76941, -84.39136]).bindPopup('North Avenue Apartments').addTo(mymap);
+	// var cloughMarker = L.marker([33.77456, -84.39608]).bindPopup('Clough Commons/Library').addTo(mymap);
+	// var bobbyDoddMarker = L.marker([33.77251, -84.39281]).bindPopup('Bobby Dodd Stadium').addTo(mymap);
+	// var crcMarker = L.marker([33.77567, -84.40325]).bindPopup('Campus Recreation Center').addTo(mymap);
+	// var gtpdMarker = L.marker([33.77906, -84.40143]).bindPopup('GT Police Department').addTo(mymap);
+	// var techSquareMarker = L.marker([33.77698, -84.38924]).bindPopup('Tech Square').addTo(mymap);
+	// var biotechQuadMarker = L.marker([33.77897, -84.39653]).bindPopup('Biotech Quad').addTo(mymap);
+	// var greekHousesMarker = L.marker([33.77648, -84.39246]).bindPopup('Small portion of Greek houses').addTo(mymap);
+	// var howeyPhysicsMarker = L.marker([33.77745, -84.39882]).bindPopup('Howey Physics Building').addTo(mymap);
+	// var mccamishPavilionMarker = L.marker([33.7809, -84.39274]).bindPopup('McCamish Pavilion').addTo(mymap);
+	// var westVillageMarker = L.marker([33.77932, -84.40462]).bindPopup('West Village Dining Commons').addTo(mymap);
+	// var graduateLivingCenterMarker = L.marker([33.78254, -84.39646]).bindPopup('Graduate Living Center').addTo(mymap);
+	// var woodruffMarker = L.marker([33.77913, -84.40698]).bindPopup('Woodruff Housing').addTo(mymap);
+	
+	//STEP 3
+	var techBoundaryLatLngs = [
+	  [33.76816, -84.39059], //starting point in the bottom right at north avenue apartments
+	  [33.76816, -84.39213],
+	  [33.7703, -84.39213],
+	  [33.77048, -84.39599],
+	  [33.77269, -84.39767],
+	  [33.7738, -84.40221],
+	  [33.7754, -84.4047],
+	  [33.77683, -84.4063],
+	  [33.77904, -84.4071],
+	  [33.77961, -84.40714],
+	  [33.7820, -84.40789], //top left corner of the map
+	  [33.78204, -84.39076],
+	  [33.7783, -84.3908],
+	  [33.77808, -84.38677],
+	  [33.77458, -84.38677],
+	  [33.77462, -84.39059],
+	  [33.76816, -84.39059]
+	];
+	var polyline = L.polyline(techBoundaryLatLngs, {
+		color: 'gold'
+	}).addTo(mymap);
+	// zoom the map to the polyline
+	mymap.fitBounds(polyline.getBounds());
+
+	//STEP 4
+	var svgLayer = L.svg();
+	svgLayer.addTo(mymap)
+	var svg = d3.select("#mapid").select("svg");
+	var g = svg.select("g");
+	g.attr("class", "leaflet-zoom-hide");
+
+	//load in the data from crime_log.csv
+	//STEP 5
+	d3.csv('https://s3.us-east-2.amazonaws.com/gt-dataviz-d3-workshop/gt_crime_log_2017.csv', function(error, crime_log_data) {
+		if (error)
+			console.log(error)
+	  	data = crime_log_data;
+
+	  	data = data.filter(function(d){
+	  		if (isNaN(d['LocationLatitude'])) {
+	  			console.log(d['LocationLatitude'])
+	  		} else {
+	  			return d
+	  		}
+	  	});
+
+	  	var mapNodes = g.selectAll('circle')
+	    	.data(data);
+	  	
+	  	mapNodes.enter().append('circle')
+		    .style("opacity", 0.2)
+		    .style("fill", 'red')
+		    .attr("r", 6);
+		  
+		data.forEach(function(d) {
+		    d.LatLng = [+d.LocationLatitude, +d.LocationLongitude];
+		})
+		  
+		mymap.on('zoomend', updateNodesLocations);
+		updateNodesLocations();
+	})
+
+	//STEP 6
+	function updateNodesLocations() {
+		g.selectAll('circle')
+	    	.attr('cx', function(d) {
+	      		return mymap.latLngToLayerPoint(d.LatLng).x
+	    	})
+	    	.attr('cy', function(d) {
+	      		return mymap.latLngToLayerPoint(d.LatLng).y
+	    	})
+	    	.on("click", function(d) {
+		    	console.log(d)  
+		    })
+	}
+
+</script>
+</html>
