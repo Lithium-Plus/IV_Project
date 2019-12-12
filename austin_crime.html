@@ -4,23 +4,34 @@
 <head>
 	<title>Austin City Crime Map</title>
 	<!-- import D3 and Leaflet and our stylesheet-->
-	<script src="https://d3js.org/d3.v4.min.js"></script>
+	<script src="https://d3js.org/d3.v3.min.js"></script>
 	<script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
 	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+	<script src="https://rawgit.com/jasondavies/d3-cloud/master/build/d3.layout.cloud.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/0.8.3/jquery.csv.min.js"></script>
 	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
 	<link rel="stylesheet" type="text/css" href="stylesheet.css" />
 </head>
 <body>
   	<div id='container'>
-  		<div id="mapid"></div>
-  	</div>
+		  <div id="mapid"></div>
+		  <!-- <div id='chart'>  -->
+		  <canvas id="bar-chart" height="100" width="350" ></canvas> 
+		  <canvas id="pie-chart" height="5000" width="5000" ></canvas>
+	  <!-- </div> -->
+	  
+	</div>
+	<!-- <canvas id ='wordmap'></canvas>  -->
+	  
 </body>
 <script type="text/javascript">
+
+// ---------------------------------------------------------------------
 	//STEP ONE
 	var atl = new L.LatLng(30.2672 , -97.7431);
 	var mymap = L.map('mapid',{renderer: L.canvas()}).setView(atl, 13);
-
+	var data = [1,1,1,1,1,1]
 	var baselayer = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}', {
 	  attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://mapbox.com">Mapbox</a>',
 	  maxZoom: 20,
@@ -40,19 +51,7 @@
 	var g = svg.select("g");
 	g.attr("class", "leaflet-zoom-hide");
 
-// 	//load in the data from crime_log.csv
-// 	$.ajax({
-//     url: "Annual_Crime_Dataset_2015withLongLad.csv",
-//     async: false,
-//     success: function (csvd) {
-//         data_test = $.csv.toArrays(csvd);
-//     },
-//     dataType: "text",
-//     complete: function () {
-//         // call a function on complete 
-// 		console.log(data_test['Latitude'])
-//     }
-// });
+
 	function getColor(d) {
 		return d > 3000 ? '#800026' :
 			d > 2000  ? '#BD0026' :
@@ -100,7 +99,18 @@
 }
 	function zoomToFeature(e) {
 		mymap.fitBounds(e.target.getBounds());
-	}
+		layer = e.target.feature;
+		data = [layer.properties.robbery,layer.properties.burglary,layer.properties.auto_theft,layer.properties.agg_assault,layer.properties.theft,layer.properties.rape];
+		// console.log(data)
+		// console.log(ctx1)
+		// myPieChart.data.datasets.data = data;
+		myPieChart.data.datasets[0].data=data;
+		console.log(myPieChart.data.datasets.data);
+		myPieChart.update();
+		}
+		
+		
+	
 	function onEachFeature(feature, layer) {
     layer.on({
         mouseover: highlightFeature,
@@ -114,7 +124,10 @@ geojson = L.geoJson(hoodData, {
     onEachFeature: onEachFeature
 }).addTo(mymap);
 	var info = L.control();
-
+	var chart = L.control();
+	chart.onAdd = function(map){
+		this._div = chart
+	}
 	info.onAdd = function (map) {
 		this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
 		this.update();
@@ -137,7 +150,6 @@ geojson = L.geoJson(hoodData, {
 }
 
 	function resetHighlight(e) {
-		// var layer = e.target
 		info.update();
 	}
 
@@ -160,9 +172,65 @@ geojson = L.geoJson(hoodData, {
 	};
 
 	legend.addTo(mymap);
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+	console.log(hoodData.features.properties)
+	var labels = hoodData.features.map(function(e) {
+   			return e.properties.name;
+			});
+	var data = hoodData.features.map(function(e) {
+   			return (e.properties.density+0).toFixed(2);
+	});
+	var ctx = document.getElementById('bar-chart');
+		var barChart = new Chart(ctx, {
+		type: 'bar',
+		data: {
+		labels: labels,
+		datasets: [
+			{
+			label: "crime/unit area",
+			backgroundColor: 'rgba(0, 119, 204, 0.3)',
+			data: data
+			}
+		]
+		},
+		options: {
+		legend: { display: false },
+		title: {
+			display: true,
+			text: 'Predicted world population (millions) in 2050'
+		},
+		scales: {
+        xAxes: [{
+            ticks: {
+                fontSize: 8
+            }
+        }]
+    	}
+		}
+	});
+
+
+
+	})
+// ---------------------------------------------------------------------------------------------------------------------------
+var labels = ['robbery','burglary','auto_theft','agg_assault','theft','rape']
+		var ctx1 = document.getElementById('pie-chart');
+		console.log('yes')
+		var myPieChart = new Chart(ctx1, {
+				type: 'pie',
+				data: {
+						labels: labels,
+						datasets: [
+							{
+							data: data,
+							backgroundColor:['#B03A2E','#6C3483','#2E86C1','#17202A','#F1C40F','#641E16']
+							}
+						]
+						}
+				
+		});
+
 
 	
-	})
-
 </script>
 </html>
