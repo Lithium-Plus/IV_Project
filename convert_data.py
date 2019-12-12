@@ -67,7 +67,7 @@ for feature in data['features']:
         feature['properties']['auto_theft'] = auto_theft
         feature['properties']['agg_assault'] = agg_assault
         feature['properties']['theft'] = theft
-        feature['properties']['agg_assault'] = agg_assault
+        feature['properties']['rape'] = rape
         
         if len(days) > 0:
             feature['properties']['avg_days_solve'] = sum(days)/len(days)
