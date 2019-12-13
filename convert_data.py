@@ -58,6 +58,7 @@ for feature in data['features']:
                     theft +=1
                 elif row['Highest NIBRS/UCR Offense Description'] == 'Rape':
                     rape += 1
+                    print('rape')
 
         feature['properties']['density'] = count/(1000*area)
         feature['properties']['monthly'] = monthly
